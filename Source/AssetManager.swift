@@ -73,8 +73,11 @@ open class AssetManager {
     DispatchQueue.global(qos: .userInitiated).async {
       let imageManager = PHImageManager.default()
       let requestOptions = PHImageRequestOptions()
-      requestOptions.isSynchronous = true
+      requestOptions.isSynchronous = false
       requestOptions.isNetworkAccessAllowed = true
+      requestOptions.deliveryMode = .opportunistic
+      requestOptions.version = .current
+      requestOptions.resizeMode = .exact
       
       var images = [UIImage]()
       for asset in assets {
