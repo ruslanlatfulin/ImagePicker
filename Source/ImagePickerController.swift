@@ -1,6 +1,7 @@
 import UIKit
 import MediaPlayer
 import Photos
+import ImagePicker
 
 @objc public protocol ImagePickerDelegate: NSObjectProtocol {
 
@@ -90,7 +91,6 @@ open class ImagePickerController: UIViewController {
   }
 
   // MARK: - Initialization
-
   @objc public required init(configuration: Configuration = Configuration()) {
     self.configuration = configuration
     super.init(nibName: nil, bundle: nil)
@@ -107,7 +107,6 @@ open class ImagePickerController: UIViewController {
   }
 
   // MARK: - View lifecycle
-
   open override func viewDidLoad() {
     super.viewDidLoad()
 
@@ -160,9 +159,6 @@ open class ImagePickerController: UIViewController {
     initialContentOffset = galleryView.collectionView.contentOffset
 
     applyOrientationTransforms()
-
-    UIAccessibility.post(notification: UIAccessibility.Notification.screenChanged,
-                                    argument: bottomContainer);
   }
 
   open func resetAssets() {
@@ -215,7 +211,6 @@ open class ImagePickerController: UIViewController {
   }
 
   // MARK: - Notifications
-
   deinit {
     if configuration.managesAudioSession {
       _ = try? AVAudioSession.sharedInstance().setActive(false)
@@ -288,7 +283,6 @@ open class ImagePickerController: UIViewController {
   }
 
   // MARK: - Helpers
-
   open override var prefersStatusBarHidden: Bool {
     return statusBarHidden
   }
@@ -363,7 +357,6 @@ open class ImagePickerController: UIViewController {
 }
 
 // MARK: - Action methods
-
 extension ImagePickerController: BottomContainerViewDelegate {
 
   func pickerButtonDidPress() {
@@ -371,14 +364,22 @@ extension ImagePickerController: BottomContainerViewDelegate {
   }
 
   func doneButtonDidPress() {
-    var images: [UIImage]
+    cameraController.downloadingProgressView.isHidden = false
     if let preferredImageSize = preferredImageSize {
-      images = AssetManager.resolveAssets(stack.assets, size: preferredImageSize)
+      AssetManager.resolveAssets(stack.assets, size: preferredImageSize, completion: { (images) in
+        DispatchQueue.main.async {
+          self.cameraController.downloadingProgressView.isHidden = true
+          self.delegate?.doneButtonDidPress(self, images: images)
+        }
+      })
     } else {
-      images = AssetManager.resolveAssets(stack.assets)
+      AssetManager.resolveAssets(stack.assets, completion: { (images) in
+        DispatchQueue.main.async {
+          self.cameraController.downloadingProgressView.isHidden = true
+          self.delegate?.doneButtonDidPress(self, images: images)
+        }
+      })
     }
-
-    delegate?.doneButtonDidPress(self, images: images)
   }
 
   func cancelButtonDidPress() {
@@ -433,7 +434,6 @@ extension ImagePickerController: CameraViewDelegate {
   }
 
   // MARK: - Rotation
-
   open override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
     return .portrait
   }
@@ -466,7 +466,6 @@ extension ImagePickerController: CameraViewDelegate {
 }
 
 // MARK: - TopView delegate methods
-
 extension ImagePickerController: TopViewDelegate {
 
   func flashButtonDidPress(_ title: String) {
@@ -479,7 +478,6 @@ extension ImagePickerController: TopViewDelegate {
 }
 
 // MARK: - Pan gesture handler
-
 extension ImagePickerController: ImageGalleryPanGestureDelegate {
 
   func panGestureDidStart() {

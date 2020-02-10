@@ -44,6 +44,18 @@ class CameraView: UIViewController, CLLocationManagerDelegate, CameraManDelegate
 
     return view
   }()
+  
+  lazy var downloadingProgressView: UIView = {
+    let progressView = UIView()
+    progressView.frame = CGRect(x: self.view.frame.size.width / 2 - progressView.frame.size.width / 2, y: self.view.frame.size.width / 2 - progressView.frame.size.width / 2, width: 50, height: 50)
+    progressView.backgroundColor = UIColor.blue
+    let indicator = UIActivityIndicatorView(style: .whiteLarge)
+    indicator.frame = CGRect(x: progressView.frame.size.width/2 - indicator.frame.size.width/2, y: progressView.frame.size.width/2 - indicator.frame.size.width/2, width: indicator.frame.size.width, height: indicator.frame.size.height)
+    indicator.startAnimating()
+    progressView.addSubview(indicator)
+    progressView.isHidden = true
+    return progressView
+  }()
 
   lazy var noCameraLabel: UILabel = { [unowned self] in
     let label = UILabel()
@@ -124,6 +136,7 @@ class CameraView: UIViewController, CLLocationManagerDelegate, CameraManDelegate
 
     view.addSubview(containerView)
     containerView.addSubview(blurView)
+    view.addSubview(downloadingProgressView)
 
     [focusImageView, capturedImageView].forEach {
       view.addSubview($0)
@@ -166,7 +179,6 @@ class CameraView: UIViewController, CLLocationManagerDelegate, CameraManDelegate
   }
 
   // MARK: - Layout
-
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
 
@@ -184,7 +196,6 @@ class CameraView: UIViewController, CLLocationManagerDelegate, CameraManDelegate
   }
 
   // MARK: - Actions
-
   @objc func settingsButtonDidTap() {
     DispatchQueue.main.async {
       if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
@@ -194,7 +205,6 @@ class CameraView: UIViewController, CLLocationManagerDelegate, CameraManDelegate
   }
 
   // MARK: - Camera actions
-
   func rotateCamera() {
     UIView.animate(withDuration: 0.3, animations: {
       self.containerView.alpha = 1
@@ -234,7 +244,6 @@ class CameraView: UIViewController, CLLocationManagerDelegate, CameraManDelegate
   }
 
   // MARK: - Timer methods
-
   @objc func timerDidFire() {
     UIView.animate(withDuration: 0.3, animations: { [unowned self] in
       self.focusImageView.alpha = 0
@@ -244,7 +253,6 @@ class CameraView: UIViewController, CLLocationManagerDelegate, CameraManDelegate
   }
 
   // MARK: - Camera methods
-
   func focusTo(_ point: CGPoint) {
     let convertedPoint = CGPoint(x: point.x / UIScreen.main.bounds.width,
                                  y: point.y / UIScreen.main.bounds.height)
@@ -272,7 +280,6 @@ class CameraView: UIViewController, CLLocationManagerDelegate, CameraManDelegate
   }
 
   // MARK: - Tap
-
   @objc func tapGestureRecognizerHandler(_ gesture: UITapGestureRecognizer) {
     let touch = gesture.location(in: view)
 
@@ -282,7 +289,6 @@ class CameraView: UIViewController, CLLocationManagerDelegate, CameraManDelegate
   }
 
   // MARK: - Pinch
-
   @objc func pinchGestureRecognizerHandler(_ gesture: UIPinchGestureRecognizer) {
     switch gesture.state {
     case .began:
@@ -297,7 +303,6 @@ class CameraView: UIViewController, CLLocationManagerDelegate, CameraManDelegate
   }
 
   // MARK: - Private helpers
-
   func showNoCamera(_ show: Bool) {
     [noCameraButton, noCameraLabel].forEach {
       show ? view.addSubview($0) : $0.removeFromSuperview()
